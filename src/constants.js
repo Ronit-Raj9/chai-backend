@@ -1,1 +1,1 @@
-export const DB_NAME = "ionia"
+export const DB_NAME = "ionia_test"

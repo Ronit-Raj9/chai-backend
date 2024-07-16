@@ -4,14 +4,6 @@ import bcrypt from "bcrypt";
 
 const userSchema = new Schema(
     {
-        username: {
-            type: String,
-            required: true,
-            unique: true,
-            lowercase: true,
-            trim: true,
-            index: true
-        },
         email: {
             type: String,
             required: true,
@@ -27,21 +19,10 @@ const userSchema = new Schema(
         },
         avatar: {
             type: String, // clourdnary url
-            required: true
         }, 
         coverImage: {
             type: String // clourdnary url
         },
-        watchHistory:{
-            type: Schema.Types.ObjectId,
-            ref: "Video"
-        },
-        // watchHistory: {
-        //     {
-        //         type: Schema.Types.ObjectId,
-        //         ref: "Video",
-        //     }
-        // },
         password: {
             type:String,
             required: [true, "Password is required"]
@@ -57,7 +38,7 @@ const userSchema = new Schema(
 
 userSchema.pre("save", async function (next) {
     if(!this.isModified("password")) return next(); 
-    this.password = bcrypt.hash(this.password, 10)
+    this.password = await bcrypt.hash(this.password, 10)
     next()
 })
 
@@ -66,8 +47,9 @@ userSchema.methods.isPasswordCorrect = async function
     return await bcrypt.compare(password, this.password)
 }
 
-userSchema.methods.generateAccessToken = async function () {
-    return jwt.sign(
+userSchema.methods.generateAccessToken = function () {
+
+    const accessToken = jwt.sign(
         {
             _id: this._id,
             email: this.email,
@@ -79,11 +61,16 @@ userSchema.methods.generateAccessToken = async function () {
         {
             expiresIn: process.env.ACCESS_TOKEN_EXPIRY
         }
-    )
+    );
+
+    console.log("\nAccess token is: " + accessToken);
+
+    return accessToken;
 }
 
-userSchema.methods.generateRefreshToken = async function () {
-    return jwt.sign(
+userSchema.methods.generateRefreshToken = function () {
+
+    const refreshToken = jwt.sign(
         {
             _id: this._id,
         },
@@ -92,6 +79,9 @@ userSchema.methods.generateRefreshToken = async function () {
             expiresIn: process.env.REFRESH_TOKEN_EXPIRY
         }
     )
+    console.log("\nRefresh token is: " + refreshToken);
+
+    return refreshToken;
 }
 
 export const User = mongoose.model("User", userSchema);
